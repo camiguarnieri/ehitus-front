@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/Login/LoginPage";
 import Layout from "../components/Layout";
+import FuncionariosPage from "../pages/Funcionarios/FuncionariosPage";
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem("token");
@@ -13,6 +14,7 @@ export default function AppRouter() {
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<PrivateRoute><div>Home</div></PrivateRoute>} />
+                <Route path="/funcionarios" element={<PrivateRoute><FuncionariosPage /></PrivateRoute>} />
             </Routes>
         </BrowserRouter>
     );

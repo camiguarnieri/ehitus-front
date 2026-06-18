@@ -22,12 +22,23 @@ export const getEmpresas = async () => {
 };
 
 // FUNCIONARIOS
+// FUNCIONARIOS
 export const getFuncionarios = async () => {
     try {
         const response = await ehitusApi.get("/funcionarios");
         return response.data;
     } catch (error) {
         console.error("Error obteniendo funcionarios:", error);
+        throw error;
+    }
+};
+
+export const createFuncionario = async (funcionario) => {
+    try {
+        const response = await ehitusApi.post("/funcionarios", funcionario);
+        return response.data;
+    } catch (error) {
+        console.error("Error creando funcionario:", error);
         throw error;
     }
 };
