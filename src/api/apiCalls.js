@@ -74,3 +74,24 @@ export const saveParametroCargaHoraria = async (data) => {
         throw error;
     }
 };
+
+// PASOS CIERRE HORAS
+export const getPasosCierreHoras = async () => {
+    try {
+        const response = await ehitusApi.get("/pasos-cierre-horas");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo pasos cierre horas:", error);
+        throw error;
+    }
+};
+
+export const savePasosCierreHoras = async (data) => {
+    try {
+        const response = await ehitusApi.post("/pasos-cierre-horas", data);
+        return response.data;
+    } catch (error) {
+        console.error("Error guardando pasos cierre horas:", error);
+        throw error;
+    }
+};
