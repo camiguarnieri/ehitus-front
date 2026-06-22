@@ -60,8 +60,8 @@ export default function FuncionariosPage() {
             setDialogOpen(false);
             setForm(emptyForm);
             cargar();
-        } catch {
-            setError("Error guardando funcionario");
+        } catch (err) {
+            setError(err?.response?.data?.message || "Error guardando funcionario");
         } finally {
             setSaving(false);
         }

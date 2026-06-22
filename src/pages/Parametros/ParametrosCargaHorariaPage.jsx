@@ -36,8 +36,9 @@ function DiaRow({ dia, value, onChange }) {
                 type="number"
                 value={value}
                 onChange={onChange}
+                onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E' || e.key === '-') e.preventDefault(); }}
                 slotProps={{ input: { inputProps: { min: 0, max: 24, step: 0.5 } } }}
-                sx={{ width: 110 }}
+                sx={{ width: 120 }}
                 label="Horas"
             />
         </Box>
