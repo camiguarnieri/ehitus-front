@@ -3,6 +3,7 @@ import LoginPage from "../pages/Login/LoginPage";
 import Layout from "../components/Layout";
 import FuncionariosPage from "../pages/Funcionarios/FuncionariosPage";
 import ObrasPage from "../pages/Obras/ObrasPage";
+import ParametrosCargaHorariaPage from "../pages/Parametros/ParametrosCargaHorariaPage";
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem("token");
@@ -17,6 +18,8 @@ export default function AppRouter() {
                 <Route path="/" element={<PrivateRoute><div>Home</div></PrivateRoute>} />
                 <Route path="/funcionarios" element={<PrivateRoute><FuncionariosPage /></PrivateRoute>} />
                 <Route path="/obras" element={<PrivateRoute><ObrasPage /></PrivateRoute>} />
+                <Route path="/parametros-carga" element={<PrivateRoute><ParametrosCargaHorariaPage /></PrivateRoute>} />
+
             </Routes>
         </BrowserRouter>
     );

@@ -53,3 +53,24 @@ export const getObras = async () => {
         throw error;
     }
 };
+
+// PARAMETROS CARGA HORARIA
+export const getParametroCargaHoraria = async () => {
+    try {
+        const response = await ehitusApi.get("/parametros-carga-horaria");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo parámetros carga horaria:", error);
+        throw error;
+    }
+};
+
+export const saveParametroCargaHoraria = async (data) => {
+    try {
+        const response = await ehitusApi.post("/parametros-carga-horaria", data);
+        return response.data;
+    } catch (error) {
+        console.error("Error guardando parámetros carga horaria:", error);
+        throw error;
+    }
+};
