@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/Login/LoginPage";
 import Layout from "../components/Layout";
 import FuncionariosPage from "../pages/Funcionarios/FuncionariosPage";
@@ -13,7 +13,7 @@ const PrivateRoute = ({ children }) => {
 
 export default function AppRouter() {
     return (
-        <BrowserRouter>
+        <HashRouter>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<PrivateRoute><div>Home</div></PrivateRoute>} />
@@ -23,6 +23,6 @@ export default function AppRouter() {
                 <Route path="/parametros-cierre" element={<PrivateRoute><ParametrosCierreMesPage /></PrivateRoute>} />
 
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
