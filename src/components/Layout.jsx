@@ -4,6 +4,7 @@ import {
     Avatar, Divider, useMediaQuery, useTheme, Drawer
 } from "@mui/material";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -20,6 +21,7 @@ const SIDEBAR_WIDTH = 240;
 
 const navItems = [
     { label: "Funcionarios", path: "/funcionarios", icon: <PeopleAltIcon fontSize="small" /> },
+    { label: "Usuarios", path: "/usuarios", icon: <ManageAccountsIcon fontSize="small" /> },
     { label: "Obras", path: "/obras", icon: <ApartmentIcon fontSize="small" /> },
     { label: "Carga horaria", path: "/carga-horaria", icon: <AccessTimeIcon fontSize="small" /> },
 ];

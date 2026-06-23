@@ -70,7 +70,7 @@ export default function ParametrosCierreMesPage() {
     if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>;
 
     return (
-        <Box sx={{ maxWidth: 560, mx: "auto" }}>
+        <Box>
 
             {/* Header */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
@@ -83,7 +83,7 @@ export default function ParametrosCierreMesPage() {
                 </Box>
                 <Typography variant="h6" fontWeight={700}>Parámetros cierre de mes</Typography>
             </Box>
-            <Typography color="text.secondary" fontSize="0.85rem" mb={3} ml="52px">
+            <Typography color="text.secondary" fontSize="0.85rem" sx={{ mb: 4, ml: "52px" }}>
                 Configurá los pasos del proceso de cierre mensual. Cada opción indica si esa etapa fue ejecutada o está habilitada.
             </Typography>
 

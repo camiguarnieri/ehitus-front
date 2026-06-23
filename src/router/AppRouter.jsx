@@ -5,6 +5,8 @@ import FuncionariosPage from "../pages/Funcionarios/FuncionariosPage";
 import ObrasPage from "../pages/Obras/ObrasPage";
 import ParametrosCargaHorariaPage from "../pages/Parametros/ParametrosCargaHorariaPage";
 import ParametrosCierreMesPage from "../pages/Parametros/ParametrosCierreMesPage";
+import CargaHorariaPage from "../pages/CargaHoraria/CargaHorariaPage";
+import UsuariosPage from "../pages/Usuarios/UsuariosPage";
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem("token");
@@ -18,10 +20,11 @@ export default function AppRouter() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<PrivateRoute><div>Home</div></PrivateRoute>} />
                 <Route path="/funcionarios" element={<PrivateRoute><FuncionariosPage /></PrivateRoute>} />
+                <Route path="/usuarios" element={<PrivateRoute><UsuariosPage /></PrivateRoute>} />
                 <Route path="/obras" element={<PrivateRoute><ObrasPage /></PrivateRoute>} />
                 <Route path="/parametros-carga" element={<PrivateRoute><ParametrosCargaHorariaPage /></PrivateRoute>} />
                 <Route path="/parametros-cierre" element={<PrivateRoute><ParametrosCierreMesPage /></PrivateRoute>} />
-
+                <Route path="/carga-horaria" element={<PrivateRoute><CargaHorariaPage /></PrivateRoute>} />
             </Routes>
         </HashRouter>
     );

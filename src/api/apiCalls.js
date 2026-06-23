@@ -21,6 +21,47 @@ export const getEmpresas = async () => {
     }
 };
 
+// USUARIOS
+export const getUsuarios = async () => {
+    try {
+        const response = await ehitusApi.get("/usuarios");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo usuarios:", error);
+        throw error;
+    }
+};
+
+export const createUsuario = async (usuario) => {
+    try {
+        const response = await ehitusApi.post("/usuarios", usuario);
+        return response.data;
+    } catch (error) {
+        console.error("Error creando usuario:", error);
+        throw error;
+    }
+};
+
+export const updateUsuario = async (id, usuario) => {
+    try {
+        const response = await ehitusApi.put(`/usuarios/${id}`, usuario);
+        return response.data;
+    } catch (error) {
+        console.error("Error actualizando usuario:", error);
+        throw error;
+    }
+};
+
+export const deleteUsuario = async (id) => {
+    try {
+        const response = await ehitusApi.delete(`/usuarios/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error dando de baja usuario:", error);
+        throw error;
+    }
+};
+
 // FUNCIONARIOS
 // FUNCIONARIOS
 export const getFuncionarios = async () => {
@@ -92,6 +133,27 @@ export const savePasosCierreHoras = async (data) => {
         return response.data;
     } catch (error) {
         console.error("Error guardando pasos cierre horas:", error);
+        throw error;
+    }
+};
+
+// PLANILLA HS
+export const getPlanillaHs = async (fecha, numObra) => {
+    try {
+        const response = await ehitusApi.get(`/planilla-hs?fecha=${fecha}&numObra=${numObra}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo planilla:", error);
+        throw error;
+    }
+};
+
+export const savePlanillaHs = async (registros) => {
+    try {
+        const response = await ehitusApi.post("/planilla-hs", { registros });
+        return response.data;
+    } catch (error) {
+        console.error("Error guardando planilla:", error);
         throw error;
     }
 };

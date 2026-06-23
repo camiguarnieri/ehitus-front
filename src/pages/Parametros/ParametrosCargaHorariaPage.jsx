@@ -88,7 +88,7 @@ export default function ParametrosCargaHorariaPage() {
     if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>;
 
     return (
-        <Box sx={{ maxWidth: 560, mx: "auto" }}>
+        <Box>
 
             {/* Header */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
@@ -101,7 +101,7 @@ export default function ParametrosCargaHorariaPage() {
                 </Box>
                 <Typography variant="h6" fontWeight={700}>Parámetros carga horaria</Typography>
             </Box>
-            <Typography color="text.secondary" fontSize="0.85rem" mb={3} ml="52px">
+            <Typography color="text.secondary" fontSize="0.85rem" sx={{ mb: 4, ml: "52px" }}>
                 Definí cuántas horas corresponden a cada día de la semana. Las horas que superen este valor se consideran extras.
             </Typography>
 

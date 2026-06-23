@@ -20,7 +20,7 @@ export default function LoginPage() {
             localStorage.setItem("codEmp", data.data.codEmp);
             navigate("/");
         } catch (err) {
-            setError("Usuario o contraseña incorrectos");
+            setError(err?.response?.data?.message || "Usuario o contraseña incorrectos");
         } finally {
             setLoading(false);
         }
