@@ -3,7 +3,9 @@ import {
     Box, Typography, Button, Chip, TextField, InputAdornment,
     Dialog, DialogTitle, DialogContent, DialogActions,
     FormControl, InputLabel, Select, MenuItem, CircularProgress,
-    Card, CardContent, useMediaQuery, useTheme, IconButton, Tooltip
+    Card, CardContent, useMediaQuery, useTheme, IconButton, Tooltip,
+    List, ListItem, ListItemText, ListItemSecondaryAction, Divider,
+    Alert
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { esES } from "@mui/x-data-grid/locales";
@@ -11,25 +13,44 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { createUsuario, deleteUsuario, getEmpresas, getUsuarios, updateUsuario } from "../../api/apiCalls";
+import PeopleIcon from "@mui/icons-material/People";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
+import {
+    createUsuario, deleteUsuario, getEmpresas, getUsuarios, updateUsuario,
+    getTodosFuncionarios, getFuncionariosPorSupervisor, setFuncionariosPorSupervisor
+} from "../../api/apiCalls";
 
 const estadoLabel = { A: "Activo", I: "Inactivo" };
 const estadoColor = { A: "success", I: "error" };
-
 const emptyForm = { usuario: "", password: "", codEmp: "", nombre: "", estado: "A" };
 
 export default function UsuariosPage() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+    // Estado principal
     const [rows, setRows] = useState([]);
     const [empresas, setEmpresas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [error, setError] = useState("");
+
+    // Dialog ABM usuario
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState("");
+
+    // Dialog asignación funcionarios
+    const [asignOpen, setAsignOpen] = useState(false);
+    const [asignUsuario, setAsignUsuario] = useState(null); // { Id, Usuario, Nombre }
+    const [todosFuncionarios, setTodosFuncionarios] = useState([]);
+    const [asignados, setAsignados] = useState([]); // codigos asignados (Set)
+    const [asignSearch, setAsignSearch] = useState("");
+    const [asignLoading, setAsignLoading] = useState(false);
+    const [asignSaving, setAsignSaving] = useState(false);
+    const [asignError, setAsignError] = useState("");
 
     const cargar = async () => {
         setLoading(true);
@@ -46,6 +67,7 @@ export default function UsuariosPage() {
 
     useEffect(() => { cargar(); }, []);
 
+    // ── ABM usuario ──────────────────────────────────────────────
     const filtered = useMemo(() => rows.filter((r) => {
         const texto = `${r.Usuario} ${r.Nombre} ${r.Empresa} ${r.CodEmp}`.toLowerCase();
         return texto.includes(search.toLowerCase());
@@ -76,14 +98,7 @@ export default function UsuariosPage() {
             setError(editing ? "Usuario y empresa son obligatorios" : "Usuario, password y empresa son obligatorios");
             return;
         }
-
-        const payload = {
-            usuario: form.usuario,
-            codEmp: Number(form.codEmp),
-            nombre: form.nombre,
-            estado: form.estado,
-        };
-
+        const payload = { usuario: form.usuario, codEmp: Number(form.codEmp), nombre: form.nombre, estado: form.estado };
         if (form.password) payload.password = form.password;
 
         setSaving(true);
@@ -116,27 +131,92 @@ export default function UsuariosPage() {
         }
     };
 
+    // ── Asignación funcionarios ──────────────────────────────────
+    const openAsignacion = async (row) => {
+        setAsignUsuario(row);
+        setAsignSearch("");
+        setAsignError("");
+        setAsignOpen(true);
+        setAsignLoading(true);
+        try {
+            const [todosRes, asignadosRes] = await Promise.all([
+                getTodosFuncionarios(),
+                getFuncionariosPorSupervisor(row.Id)
+            ]);
+            // Filtrar solo funcionarios de la misma empresa
+            const funcionariosEmpresa = (todosRes.data || []).filter(f => f.CodEmp === row.CodEmp);
+            setTodosFuncionarios(funcionariosEmpresa);
+            const codigosAsignados = new Set((asignadosRes.data || []).map(f => f.Codigo));
+            setAsignados(codigosAsignados);
+        } catch {
+            setAsignError("Error cargando funcionarios");
+        } finally {
+            setAsignLoading(false);
+        }
+    };
+
+    const toggleAsignado = (codigo) => {
+        setAsignados(prev => {
+            const next = new Set(prev);
+            if (next.has(codigo)) {
+                next.delete(codigo);
+            } else {
+                next.add(codigo);
+            }
+            return next;
+        });
+    };
+
+    const handleGuardarAsignacion = async () => {
+        setAsignSaving(true);
+        setAsignError("");
+        try {
+            await setFuncionariosPorSupervisor(asignUsuario.Id, Array.from(asignados));
+            setAsignOpen(false);
+        } catch (err) {
+            setAsignError(err?.response?.data?.message || "Error guardando asignación");
+        } finally {
+            setAsignSaving(false);
+        }
+    };
+
+    // Funcionarios filtrados por búsqueda en el modal
+    const funcionariosFiltrados = useMemo(() => {
+        if (!asignSearch) return todosFuncionarios;
+        const q = asignSearch.toLowerCase();
+        return todosFuncionarios.filter(f => {
+            const nombre = `${f.Apellido1} ${f.Apellido2 || ''} ${f.Nombre1 || ''} ${f.CI || ''}`.toLowerCase();
+            return nombre.includes(q);
+        });
+    }, [todosFuncionarios, asignSearch]);
+
+    const asignadosList = funcionariosFiltrados.filter(f => asignados.has(f.Codigo));
+    const noAsignadosList = funcionariosFiltrados.filter(f => !asignados.has(f.Codigo));
+
+    const nombreFuncionario = (f) =>
+        `${f.Apellido1 || ''} ${f.Apellido2 || ''}`.trim() + ', ' + `${f.Nombre1 || ''}`.trim();
+
+    // ── Columnas DataGrid ────────────────────────────────────────
     const columns = [
-        { field: "Id", headerName: "Id", width: 80 },
-        { field: "Usuario", headerName: "Usuario", flex: 1, minWidth: 140 },
-        { field: "Nombre", headerName: "Nombre", flex: 1, minWidth: 180 },
-        { field: "Empresa", headerName: "Empresa", flex: 1, minWidth: 160 },
+        { field: "Id", headerName: "Id", width: 60 },
+        { field: "Usuario", headerName: "Usuario", flex: 1, minWidth: 130 },
+        { field: "Nombre", headerName: "Nombre", flex: 1, minWidth: 160 },
+        { field: "Empresa", headerName: "Empresa", flex: 1, minWidth: 150 },
         {
-            field: "Estado",
-            headerName: "Estado",
-            width: 110,
+            field: "Estado", headerName: "Estado", width: 100,
             renderCell: ({ value }) => (
                 <Chip label={estadoLabel[value] || value} size="small" color={estadoColor[value] || "default"} />
             ),
         },
         {
-            field: "acciones",
-            headerName: "",
-            width: 100,
-            sortable: false,
-            filterable: false,
+            field: "acciones", headerName: "", width: 130, sortable: false, filterable: false,
             renderCell: ({ row }) => (
                 <Box sx={{ display: "flex", gap: 0.5 }}>
+                    <Tooltip title="Funcionarios asignados">
+                        <IconButton size="small" color="primary" onClick={() => openAsignacion(row)}>
+                            <PeopleIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Editar">
                         <IconButton size="small" onClick={() => openEdit(row)}>
                             <EditIcon fontSize="small" />
@@ -158,29 +238,24 @@ export default function UsuariosPage() {
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
                 <Typography variant="h5" fontWeight={700}>Usuarios</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-                    Agregar
-                </Button>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Agregar</Button>
             </Box>
 
             {error && <Typography color="error" fontSize="0.9rem" sx={{ mb: 2 }}>{error}</Typography>}
 
             <TextField
                 placeholder="Buscar por usuario, nombre o empresa..."
-                size="small"
-                fullWidth
-                value={search}
+                size="small" fullWidth value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 sx={{ mb: 2 }}
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
             />
 
+            {/* ── Vista Mobile ── */}
             {isMobile ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                     {loading ? (
-                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                            <CircularProgress />
-                        </Box>
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>
                     ) : filtered.length === 0 ? (
                         <Typography color="text.secondary" textAlign="center" py={4}>Sin resultados</Typography>
                     ) : filtered.map((r) => (
@@ -195,6 +270,11 @@ export default function UsuariosPage() {
                                 </Box>
                                 <Typography color="text.secondary" fontSize="0.85rem">Empresa: {r.Empresa || r.CodEmp}</Typography>
                                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
+                                    <Tooltip title="Funcionarios asignados">
+                                        <IconButton size="small" color="primary" onClick={() => openAsignacion(r)}>
+                                            <PeopleIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
                                     <IconButton size="small" onClick={() => openEdit(r)}><EditIcon fontSize="small" /></IconButton>
                                     <IconButton size="small" color="error" disabled={r.Estado === "I"} onClick={() => handleBaja(r)}><DeleteIcon fontSize="small" /></IconButton>
                                 </Box>
@@ -203,14 +283,11 @@ export default function UsuariosPage() {
                     ))}
                 </Box>
             ) : (
+                /* ── Vista Desktop ── */
                 <Box sx={{ backgroundColor: "#fff", borderRadius: 2, overflow: "hidden" }}>
                     <DataGrid
-                        rows={filtered}
-                        columns={columns}
-                        getRowId={(row) => row.Id}
-                        loading={loading}
-                        autoHeight
-                        pageSizeOptions={[10, 25, 50]}
+                        rows={filtered} columns={columns} getRowId={(row) => row.Id}
+                        loading={loading} autoHeight pageSizeOptions={[10, 25, 50]}
                         initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                         disableRowSelectionOnClick
                         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
@@ -223,6 +300,7 @@ export default function UsuariosPage() {
                 </Box>
             )}
 
+            {/* ── Dialog ABM usuario ── */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>{editing ? "Editar usuario" : "Agregar usuario"}</DialogTitle>
                 <DialogContent>
@@ -231,17 +309,14 @@ export default function UsuariosPage() {
                         <TextField label="Usuario *" value={form.usuario} onChange={(e) => setForm({ ...form, usuario: e.target.value })} />
                         <TextField
                             label={editing ? "Password nuevo" : "Password *"}
-                            type="password"
-                            value={form.password}
+                            type="password" value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
                         />
                         <TextField label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
                         <FormControl fullWidth>
                             <InputLabel>Empresa *</InputLabel>
                             <Select value={form.codEmp} label="Empresa *" onChange={(e) => setForm({ ...form, codEmp: e.target.value })}>
-                                {empresas.map((empresa) => (
-                                    <MenuItem key={empresa.CodEmp} value={empresa.CodEmp}>{empresa.Empresa}</MenuItem>
-                                ))}
+                                {empresas.map((e) => <MenuItem key={e.CodEmp} value={e.CodEmp}>{e.Empresa}</MenuItem>)}
                             </Select>
                         </FormControl>
                         <FormControl fullWidth>
@@ -257,6 +332,99 @@ export default function UsuariosPage() {
                     <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
                     <Button variant="contained" onClick={handleGuardar} disabled={saving}>
                         {saving ? <CircularProgress size={20} /> : "Guardar"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* ── Dialog asignación de funcionarios ── */}
+            <Dialog open={asignOpen} onClose={() => setAsignOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    Funcionarios de {asignUsuario?.Nombre || asignUsuario?.Usuario}
+                </DialogTitle>
+                <DialogContent>
+                    {asignLoading ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>
+                    ) : (
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: 1 }}>
+                            {asignError && <Alert severity="error">{asignError}</Alert>}
+
+                            <TextField
+                                placeholder="Buscar funcionario..."
+                                size="small" fullWidth value={asignSearch}
+                                onChange={(e) => setAsignSearch(e.target.value)}
+                                slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+                            />
+
+                            {/* Asignados */}
+                            <Typography variant="subtitle2" fontWeight={700} color="success.main">
+                                Asignados ({asignados.size})
+                            </Typography>
+                            {asignadosList.length === 0 ? (
+                                <Typography color="text.secondary" fontSize="0.85rem">Ninguno</Typography>
+                            ) : (
+                                <List dense disablePadding sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+                                    {asignadosList.map((f, i) => (
+                                        <Box key={f.Codigo}>
+                                            {i > 0 && <Divider />}
+                                            <ListItem>
+                                                <ListItemText
+                                                    primary={nombreFuncionario(f)}
+                                                    secondary={`CI: ${f.CI}`}
+                                                    primaryTypographyProps={{ fontSize: "0.9rem" }}
+                                                    secondaryTypographyProps={{ fontSize: "0.8rem" }}
+                                                />
+                                                <ListItemSecondaryAction>
+                                                    <Tooltip title="Quitar">
+                                                        <IconButton size="small" color="error" onClick={() => toggleAsignado(f.Codigo)}>
+                                                            <RemoveCircleOutlineIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </ListItemSecondaryAction>
+                                            </ListItem>
+                                        </Box>
+                                    ))}
+                                </List>
+                            )}
+
+                            <Divider />
+
+                            {/* Disponibles */}
+                            <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                                Disponibles ({noAsignadosList.length})
+                            </Typography>
+                            {noAsignadosList.length === 0 ? (
+                                <Typography color="text.secondary" fontSize="0.85rem">Todos asignados</Typography>
+                            ) : (
+                                <List dense disablePadding sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, maxHeight: 220, overflowY: "auto" }}>
+                                    {noAsignadosList.map((f, i) => (
+                                        <Box key={f.Codigo}>
+                                            {i > 0 && <Divider />}
+                                            <ListItem>
+                                                <ListItemText
+                                                    primary={nombreFuncionario(f)}
+                                                    secondary={`CI: ${f.CI}`}
+                                                    primaryTypographyProps={{ fontSize: "0.9rem" }}
+                                                    secondaryTypographyProps={{ fontSize: "0.8rem" }}
+                                                />
+                                                <ListItemSecondaryAction>
+                                                    <Tooltip title="Agregar">
+                                                        <IconButton size="small" color="success" onClick={() => toggleAsignado(f.Codigo)}>
+                                                            <AddCircleOutlineIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </ListItemSecondaryAction>
+                                            </ListItem>
+                                        </Box>
+                                    ))}
+                                </List>
+                            )}
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setAsignOpen(false)}>Cancelar</Button>
+                    <Button variant="contained" onClick={handleGuardarAsignacion} disabled={asignSaving || asignLoading}>
+                        {asignSaving ? <CircularProgress size={20} /> : "Guardar"}
                     </Button>
                 </DialogActions>
             </Dialog>

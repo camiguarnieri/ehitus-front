@@ -63,7 +63,6 @@ export const deleteUsuario = async (id) => {
 };
 
 // FUNCIONARIOS
-// FUNCIONARIOS
 export const getFuncionarios = async () => {
     try {
         const response = await ehitusApi.get("/funcionarios");
@@ -80,6 +79,16 @@ export const createFuncionario = async (funcionario) => {
         return response.data;
     } catch (error) {
         console.error("Error creando funcionario:", error);
+        throw error;
+    }
+};
+
+export const getTodosFuncionarios = async () => {
+    try {
+        const response = await ehitusApi.get("/funcionarios/todos");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo todos los funcionarios:", error);
         throw error;
     }
 };
@@ -154,6 +163,39 @@ export const savePlanillaHs = async (registros) => {
         return response.data;
     } catch (error) {
         console.error("Error guardando planilla:", error);
+        throw error;
+    }
+};
+
+// REPORTE
+export const getReporte = async (params) => {
+    try {
+        const query = new URLSearchParams(params).toString();
+        const response = await ehitusApi.get(`/reporte?${query}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo reporte:", error);
+        throw error;
+    }
+};
+
+// SUPERVISOR - FUNCIONARIO
+export const getFuncionariosPorSupervisor = async (idUsuario) => {
+    try {
+        const response = await ehitusApi.get(`/supervisor-funcionario/${idUsuario}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo funcionarios del supervisor:", error);
+        throw error;
+    }
+};
+
+export const setFuncionariosPorSupervisor = async (idUsuario, codigos) => {
+    try {
+        const response = await ehitusApi.put(`/supervisor-funcionario/${idUsuario}`, { codigos });
+        return response.data;
+    } catch (error) {
+        console.error("Error guardando funcionarios del supervisor:", error);
         throw error;
     }
 };

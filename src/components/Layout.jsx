@@ -16,6 +16,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ConstructionIcon from "@mui/icons-material/Construction";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 
 const SIDEBAR_WIDTH = 240;
 
@@ -24,6 +25,7 @@ const navItems = [
     { label: "Usuarios", path: "/usuarios", icon: <ManageAccountsIcon fontSize="small" /> },
     { label: "Obras", path: "/obras", icon: <ApartmentIcon fontSize="small" /> },
     { label: "Carga horaria", path: "/carga-horaria", icon: <AccessTimeIcon fontSize="small" /> },
+    { label: "Reporte", path: "/reporte", icon: <AssessmentIcon fontSize="small" /> },
 ];
 
 const configItems = [
