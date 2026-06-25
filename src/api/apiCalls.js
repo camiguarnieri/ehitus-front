@@ -199,3 +199,14 @@ export const setFuncionariosPorSupervisor = async (idUsuario, codigos) => {
         throw error;
     }
 };
+
+// DASHBOARD
+export const getDashboard = async () => {
+    try {
+        const response = await ehitusApi.get("/dashboard");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo dashboard:", error);
+        throw error;
+    }
+};

@@ -9,9 +9,24 @@ import CargaHorariaPage from "../pages/CargaHoraria/CargaHorariaPage";
 import UsuariosPage from "../pages/Usuarios/UsuariosPage";
 import ReportePage from "../pages/Reporte/ReportePage";
 
-const PrivateRoute = ({ children }) => {
+const isTokenValido = () => {
     const token = localStorage.getItem("token");
-    return token ? <Layout>{children}</Layout> : <Navigate to="/login" />;
+    if (!token) return false;
+    try {
+        const jwt = token.split("_").slice(1).join("_");
+        const payload = JSON.parse(atob(jwt.split(".")[1]));
+        return payload.exp * 1000 > Date.now();
+    } catch {
+        return false;
+    }
+};
+
+const PrivateRoute = ({ children }) => {
+    if (!isTokenValido()) {
+        localStorage.clear();
+        return <Navigate to="/login" />;
+    }
+    return <Layout>{children}</Layout>;
 };
 
 export default function AppRouter() {
