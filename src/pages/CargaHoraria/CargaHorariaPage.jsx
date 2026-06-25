@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
     Box, Typography, TextField, MenuItem, Button, CircularProgress,
-    Alert, Card, CardContent, Divider, Chip, Switch, FormControlLabel,
+    Alert, Card, CardContent, Divider, Chip, Checkbox, FormControlLabel,
     useMediaQuery, useTheme, Collapse, IconButton
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -22,9 +22,9 @@ const tiposHs = [
     { key: "hsViaje", label: "Hs. viaje" },
 ];
 
-const incidencias = [
+// donacion, paternidad, fallecimiento → checkbox; asamblea → input
+const incidenciasCheck = [
     { key: "donacion", label: "Donación de sangre" },
-    { key: "asamblea", label: "Asamblea" },
     { key: "paternidad", label: "Paternidad" },
     { key: "fallecimiento", label: "Fallecimiento" },
 ];
@@ -32,7 +32,7 @@ const incidencias = [
 const emptyRow = {
     hs: "", hsExtra: "", hsExtraEsp: "", hsNoc: "", hsExNoc: "",
     hsExtNoctPerm: "", hsFeriados: "", hsLluvia: "", hsViaje: "",
-    altura: 0, donacion: "", asamblea: "", paternidad: "", fallecimiento: "",
+    altura: "", donacion: 0, asamblea: "", paternidad: 0, fallecimiento: 0,
 };
 
 const blockKeyDown = (e) => {
@@ -72,12 +72,14 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
     const hsNormales = getHsNormales(parametro, fecha);
     const nombre = `${func.Apellido1} ${func.Apellido2} ${func.Nombre1} ${func.Nombre2}`.trim();
 
+    const hsValue = parseFloat(data.hs);
+    const showHsWarning = !isNaN(hsValue) && hsValue > 9;
+
     return (
         <Card
             variant="outlined"
             sx={{
-                borderRadius: 2,
-                mb: 1.5,
+                borderRadius: 2, mb: 1.5,
                 transition: "box-shadow 0.2s",
                 "&:hover": { boxShadow: 3 },
                 borderLeftWidth: 3,
@@ -100,7 +102,7 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                     </IconButton>
                 </Box>
 
-                {/* Horas normales + Altura en la misma fila */}
+                {/* Horas normales + Altura */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 2, flexWrap: "wrap" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                         <Typography fontSize="0.85rem" color="text.secondary" sx={{ minWidth: 110 }}>
@@ -123,19 +125,24 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                             />
                         )}
                     </Box>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                size="small"
-                                checked={!!data.altura}
-                                onChange={(e) => onChange("altura", e.target.checked ? 1 : 0)}
-                                color="primary"
-                            />
-                        }
-                        label={<Typography fontSize="0.85rem" color="text.secondary">Altura</Typography>}
-                        sx={{ ml: 0 }}
-                    />
+
+                    {/* Altura → ahora input numérico */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography fontSize="0.85rem" color="text.secondary">Altura</Typography>
+                        <HsField
+                            value={data.altura}
+                            onChange={(e) => onChange("altura", e.target.value)}
+                            sx={{ width: 88 }}
+                        />
+                    </Box>
                 </Box>
+
+                {/* Advertencia hs > 9 */}
+                {showHsWarning && (
+                    <Alert severity="warning" sx={{ mt: 1.5, py: 0.5, fontSize: "0.8rem" }}>
+                        Se están cargando más de 9 horas normales para este funcionario.
+                    </Alert>
+                )}
 
                 {/* Expandible */}
                 <Collapse in={expanded}>
@@ -178,19 +185,36 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                         display: "grid",
                         gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
                         gap: 1.5,
+                        alignItems: "center",
                     }}>
-                        {incidencias.map((inc) => (
-                            <Box key={inc.key}>
-                                <Typography fontSize="0.75rem" color="text.secondary" mb={0.5}>
-                                    {inc.label}
-                                </Typography>
-                                <HsField
-                                    value={data[inc.key]}
-                                    onChange={(e) => onChange(inc.key, e.target.value)}
-                                    fullWidth
-                                />
-                            </Box>
+                        {/* Checkboxes */}
+                        {incidenciasCheck.map((inc) => (
+                            <FormControlLabel
+                                key={inc.key}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        checked={!!data[inc.key]}
+                                        onChange={(e) => onChange(inc.key, e.target.checked ? 1 : 0)}
+                                        sx={{ color: "#E8630A", "&.Mui-checked": { color: "#E8630A" } }}
+                                    />
+                                }
+                                label={<Typography fontSize="0.8rem" color="text.secondary">{inc.label}</Typography>}
+                                sx={{ ml: 0 }}
+                            />
                         ))}
+
+                        {/* Asamblea → input numérico */}
+                        <Box>
+                            <Typography fontSize="0.75rem" color="text.secondary" mb={0.5}>
+                                Asamblea
+                            </Typography>
+                            <HsField
+                                value={data.asamblea}
+                                onChange={(e) => onChange("asamblea", e.target.value)}
+                                fullWidth
+                            />
+                        </Box>
                     </Box>
                 </Collapse>
             </CardContent>
@@ -247,11 +271,11 @@ export default function CargaHorariaPage() {
                         hsFeriados: existing.HsFeriados ?? "",
                         hsLluvia: existing.HsLluvia ?? "",
                         hsViaje: existing.HsViaje ?? "",
-                        altura: existing.Altura ?? 0,
-                        donacion: existing.Donacion ?? "",
+                        altura: existing.Altura ?? "",
+                        donacion: existing.Donacion ?? 0,
                         asamblea: existing.Asamblea ?? "",
-                        paternidad: existing.Paternidad ?? "",
-                        fallecimiento: existing.Fallecimiento ?? "",
+                        paternidad: existing.Paternidad ?? 0,
+                        fallecimiento: existing.Fallecimiento ?? 0,
                     };
                 } else {
                     const hsNorm = getHsNormales(param, fecha);
@@ -317,7 +341,6 @@ export default function CargaHorariaPage() {
 
     return (
         <Box>
-            {/* Header */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
                 <Box sx={{
                     width: 36, height: 36, borderRadius: 2,
@@ -332,7 +355,6 @@ export default function CargaHorariaPage() {
                 Seleccioná la fecha y la obra para cargar las horas del personal.
             </Typography>
 
-            {/* Selectores */}
             <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
                 <TextField
                     label="Fecha"
@@ -373,7 +395,6 @@ export default function CargaHorariaPage() {
 
             {cargado && (
                 <>
-                    {/* Info bar */}
                     <Box sx={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
                         mb: 2, py: 1.25, px: 2,
@@ -389,12 +410,7 @@ export default function CargaHorariaPage() {
                                 weekday: "long", day: "numeric", month: "long",
                             })}
                         </Typography>
-                        <Button
-                            variant="contained"
-                            onClick={handleGuardar}
-                            disabled={saving}
-                            size="small"
-                        >
+                        <Button variant="contained" onClick={handleGuardar} disabled={saving} size="small">
                             {saving ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Guardar todo"}
                         </Button>
                     </Box>
