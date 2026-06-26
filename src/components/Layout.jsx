@@ -3,6 +3,7 @@ import {
     ListItemIcon, ListItemText, Collapse, IconButton,
     Avatar, Divider, useMediaQuery, useTheme, Drawer
 } from "@mui/material";
+import HomeIcon from "@mui/icons-material/Home";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import ApartmentIcon from "@mui/icons-material/Apartment";
@@ -21,6 +22,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 const SIDEBAR_WIDTH = 240;
 
 const navItems = [
+    { label: "Inicio", path: "/", icon: <HomeIcon fontSize="small" /> },
     { label: "Funcionarios", path: "/funcionarios", icon: <PeopleAltIcon fontSize="small" /> },
     { label: "Usuarios", path: "/usuarios", icon: <ManageAccountsIcon fontSize="small" /> },
     { label: "Obras", path: "/obras", icon: <ApartmentIcon fontSize="small" /> },

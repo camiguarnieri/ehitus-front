@@ -23,7 +23,7 @@ import {
 
 const estadoLabel = { A: "Activo", I: "Inactivo" };
 const estadoColor = { A: "success", I: "error" };
-const emptyForm = { usuario: "", password: "", codEmp: "", nombre: "", estado: "A" };
+const emptyForm = { usuario: "", password: "", codEmp: "", nombre: "", estado: "A", rol: "supervisor" };
 
 export default function UsuariosPage() {
     const theme = useTheme();
@@ -88,6 +88,7 @@ export default function UsuariosPage() {
             codEmp: row.CodEmp || "",
             nombre: row.Nombre || "",
             estado: row.Estado || "A",
+            rol: row.Rol || "supervisor",
         });
         setError("");
         setDialogOpen(true);
@@ -98,7 +99,7 @@ export default function UsuariosPage() {
             setError(editing ? "Usuario y empresa son obligatorios" : "Usuario, password y empresa son obligatorios");
             return;
         }
-        const payload = { usuario: form.usuario, codEmp: Number(form.codEmp), nombre: form.nombre, estado: form.estado };
+        const payload = { usuario: form.usuario, codEmp: Number(form.codEmp), nombre: form.nombre, estado: form.estado, rol: form.rol };
         if (form.password) payload.password = form.password;
 
         setSaving(true);
@@ -207,6 +208,13 @@ export default function UsuariosPage() {
             renderCell: ({ value }) => (
                 <Chip label={estadoLabel[value] || value} size="small" color={estadoColor[value] || "default"} />
             ),
+        },
+        {
+            field: "Rol", headerName: "Rol", width: 120,
+            renderCell: ({ value }) => (
+                <Chip label={value === 'admin' ? 'Admin' : 'Supervisor'} size="small"
+                    color={value === 'admin' ? 'primary' : 'default'} />
+            )
         },
         {
             field: "acciones", headerName: "", width: 130, sortable: false, filterable: false,
@@ -324,6 +332,13 @@ export default function UsuariosPage() {
                             <Select value={form.estado} label="Estado" onChange={(e) => setForm({ ...form, estado: e.target.value })}>
                                 <MenuItem value="A">Activo</MenuItem>
                                 <MenuItem value="I">Inactivo</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl fullWidth>
+                            <InputLabel>Rol</InputLabel>
+                            <Select value={form.rol} label="Rol" onChange={(e) => setForm({ ...form, rol: e.target.value })}>
+                                <MenuItem value="supervisor">Supervisor</MenuItem>
+                                <MenuItem value="admin">Administrador</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

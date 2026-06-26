@@ -30,6 +30,7 @@ export default function LoginPage() {
             localStorage.setItem("token", data.data.token);
             localStorage.setItem("nombre", data.data.nombre);
             localStorage.setItem("codEmp", data.data.codEmp);
+            localStorage.setItem("rol", data.data.rol);
 
             navigate("/");
         } catch (err) {
