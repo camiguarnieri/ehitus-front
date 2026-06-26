@@ -4,6 +4,7 @@ import {
     Avatar, Divider, useMediaQuery, useTheme, Drawer
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
+import GridOnIcon from "@mui/icons-material/GridOn";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import ApartmentIcon from "@mui/icons-material/Apartment";
@@ -28,6 +29,7 @@ const navItems = [
     { label: "Obras", path: "/obras", icon: <ApartmentIcon fontSize="small" /> },
     { label: "Carga horaria", path: "/carga-horaria", icon: <AccessTimeIcon fontSize="small" /> },
     { label: "Reporte", path: "/reporte", icon: <AssessmentIcon fontSize="small" /> },
+    { label: "Control de carga", path: "/control-carga", icon: <GridOnIcon fontSize="small" /> },
 ];
 
 const configItems = [

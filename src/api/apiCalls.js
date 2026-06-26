@@ -210,3 +210,14 @@ export const getDashboard = async () => {
         throw error;
     }
 };
+
+// CONTROL DE CARGA
+export const getControlCarga = async (fechaDesde, fechaHasta) => {
+    try {
+        const response = await ehitusApi.get(`/control-carga?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo control de carga:", error);
+        throw error;
+    }
+};

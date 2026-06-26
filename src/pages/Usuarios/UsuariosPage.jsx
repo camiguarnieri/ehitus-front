@@ -132,7 +132,7 @@ export default function UsuariosPage() {
         }
     };
 
-    // ── Asignación funcionarios ──────────────────────────────────
+    // ── Asignación funcionarios
     const openAsignacion = async (row) => {
         setAsignUsuario(row);
         setAsignSearch("");
@@ -274,7 +274,10 @@ export default function UsuariosPage() {
                                         <Typography fontWeight={600} fontSize="0.95rem" noWrap>{r.Usuario}</Typography>
                                         <Typography color="text.secondary" fontSize="0.85rem" noWrap>{r.Nombre}</Typography>
                                     </Box>
-                                    <Chip label={estadoLabel[r.Estado] || r.Estado} size="small" color={estadoColor[r.Estado] || "default"} />
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-end" }}>
+                                        <Chip label={estadoLabel[r.Estado] || r.Estado} size="small" color={estadoColor[r.Estado] || "default"} />
+                                        <Chip label={r.Rol === 'admin' ? 'Admin' : 'Supervisor'} size="small" color={r.Rol === 'admin' ? 'primary' : 'default'} />
+                                    </Box>
                                 </Box>
                                 <Typography color="text.secondary" fontSize="0.85rem">Empresa: {r.Empresa || r.CodEmp}</Typography>
                                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
