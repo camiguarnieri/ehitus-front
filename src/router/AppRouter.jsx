@@ -10,6 +10,7 @@ import UsuariosPage from "../pages/Usuarios/UsuariosPage";
 import ReportePage from "../pages/Reporte/ReportePage";
 import HomePage from "../pages/Home/HomePage";
 import ControlCargaPage from "../pages/ControlCarga/ControlCargaPage";
+import CargaFuncionarioPage from "../pages/CargaFuncionario/CargaFuncionarioPage";
 
 const isTokenValido = () => {
     const token = localStorage.getItem("token");
@@ -45,6 +46,7 @@ export default function AppRouter() {
                 <Route path="/reporte" element={<PrivateRoute><ReportePage /></PrivateRoute>} />
                 <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
                 <Route path="/control-carga" element={<PrivateRoute><ControlCargaPage /></PrivateRoute>} />
+                <Route path="/carga-funcionario" element={<PrivateRoute><CargaFuncionarioPage /></PrivateRoute>} />
             </Routes>
         </HashRouter>
     );

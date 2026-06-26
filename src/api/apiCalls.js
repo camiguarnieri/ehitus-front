@@ -221,3 +221,14 @@ export const getControlCarga = async (fechaDesde, fechaHasta) => {
         throw error;
     }
 };
+
+// CARGA POR FUNCIONARIO
+export const getCargaFuncionario = async (codigo, mes, quincena) => {
+    try {
+        const response = await ehitusApi.get(`/carga-funcionario?codigo=${codigo}&mes=${mes}&quincena=${quincena}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo carga por funcionario:", error);
+        throw error;
+    }
+};
