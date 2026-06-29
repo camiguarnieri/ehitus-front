@@ -72,6 +72,15 @@ export const getFuncionarios = async () => {
         throw error;
     }
 };
+export const updateFuncionario = async (codigo, data) => {
+    try {
+        const response = await ehitusApi.put(`/funcionarios/${codigo}`, data);
+        return response.data;
+    } catch (error) {
+        console.error("Error actualizando funcionario:", error);
+        throw error;
+    }
+};
 
 export const createFuncionario = async (funcionario) => {
     try {

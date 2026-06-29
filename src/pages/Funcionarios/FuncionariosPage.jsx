@@ -3,20 +3,25 @@ import {
     Box, Typography, Button, Chip, TextField, InputAdornment,
     Dialog, DialogTitle, DialogContent, DialogActions,
     FormControl, InputLabel, Select, MenuItem, CircularProgress,
-    Card, CardContent, useMediaQuery, useTheme
+    Card, CardContent, useMediaQuery, useTheme, IconButton, Tooltip,
+    FormControlLabel, Checkbox, Alert
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { esES } from "@mui/x-data-grid/locales";
 import AddIcon from "@mui/icons-material/Add";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import SearchIcon from "@mui/icons-material/Search";
-import { getFuncionarios, createFuncionario } from "../../api/apiCalls";
+import EditIcon from "@mui/icons-material/Edit";
+import { getTodosFuncionarios, createFuncionario, updateFuncionario } from "../../api/apiCalls";
 
 const estadoLabel = { A: "Activo", E: "Egresado", I: "Inactivo" };
 const estadoColor = { A: "success", E: "warning", I: "error" };
 const jormenLabel = { J: "Jornalero", M: "Mensual" };
 
-const emptyForm = { apellido1: "", apellido2: "", nombre1: "", nombre2: "", ci: "", jorMen: "J" };
+const emptyForm = {
+    apellido1: "", apellido2: "", nombre1: "", nombre2: "",
+    ci: "", jorMen: "J", estado: "A", industria: false, ley14411Industria: false
+};
 
 export default function FuncionariosPage() {
     const theme = useTheme();
@@ -25,6 +30,7 @@ export default function FuncionariosPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -32,7 +38,7 @@ export default function FuncionariosPage() {
     const cargar = async () => {
         setLoading(true);
         try {
-            const res = await getFuncionarios();
+            const res = await getTodosFuncionarios();
             setRows(res.data);
         } catch {
             setError("Error cargando funcionarios");
@@ -48,7 +54,32 @@ export default function FuncionariosPage() {
         return texto.includes(search.toLowerCase());
     });
 
+    const openCreate = () => {
+        setEditing(null);
+        setForm(emptyForm);
+        setError("");
+        setDialogOpen(true);
+    };
+
+    const openEdit = (row) => {
+        setEditing(row);
+        setForm({
+            apellido1: row.Apellido1 || "",
+            apellido2: row.Apellido2 || "",
+            nombre1: row.Nombre1 || "",
+            nombre2: row.Nombre2 || "",
+            ci: row.CI || "",
+            jorMen: row.JorMen || "J",
+            estado: row.Estado || "A",
+            industria: row.Industria === 1 || row.Industria === true,
+            ley14411Industria: row.Ley14411Industria === 1 || row.Ley14411Industria === true,
+        });
+        setError("");
+        setDialogOpen(true);
+    };
+
     const handleGuardar = async () => {
+        console.log("handleGuardar llamado, form:", form);
         if (!form.apellido1 || !form.nombre1 || !form.ci) {
             setError("Apellido, nombre y CI son obligatorios");
             return;
@@ -56,9 +87,14 @@ export default function FuncionariosPage() {
         setSaving(true);
         setError("");
         try {
-            await createFuncionario(form);
+            if (editing) {
+                await updateFuncionario(editing.Codigo, form);
+            } else {
+                await createFuncionario(form);
+            }
             setDialogOpen(false);
             setForm(emptyForm);
+            setEditing(null);
             cargar();
         } catch (err) {
             setError(err?.response?.data?.message || "Error guardando funcionario");
@@ -71,25 +107,37 @@ export default function FuncionariosPage() {
         { field: "Codigo", headerName: "Código", width: 80 },
         { field: "CI", headerName: "CI", width: 120 },
         {
-            field: "nombre_completo",
-            headerName: "Nombre completo",
-            flex: 1,
+            field: "nombre_completo", headerName: "Nombre completo", flex: 1,
             valueGetter: (value, row) => `${row.Apellido1} ${row.Apellido2} ${row.Nombre1} ${row.Nombre2}`.trim(),
         },
         {
-            field: "JorMen",
-            headerName: "Tipo",
-            width: 110,
+            field: "JorMen", headerName: "Tipo", width: 110,
             renderCell: ({ value }) => (
                 <Chip label={jormenLabel[value] || value} size="small" variant="outlined" />
             ),
         },
         {
-            field: "Estado",
-            headerName: "Estado",
-            width: 100,
+            field: "Industria", headerName: "Industria", width: 90,
+            renderCell: ({ value }) => value ? <Chip label="Sí" size="small" color="info" /> : ""
+        },
+        {
+            field: "Ley14411Industria", headerName: "Ley 14411", width: 100,
+            renderCell: ({ value }) => value ? <Chip label="Sí" size="small" color="secondary" /> : ""
+        },
+        {
+            field: "Estado", headerName: "Estado", width: 100,
             renderCell: ({ value }) => (
                 <Chip label={estadoLabel[value] || value} size="small" color={estadoColor[value] || "default"} />
+            ),
+        },
+        {
+            field: "acciones", headerName: "", width: 80, sortable: false, filterable: false,
+            renderCell: ({ row }) => (
+                <Tooltip title="Editar">
+                    <IconButton size="small" onClick={() => openEdit(row)}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             ),
         },
     ];
@@ -100,29 +148,22 @@ export default function FuncionariosPage() {
                 <Typography variant="h5" fontWeight={700}>Funcionarios</Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
                     <Button variant="outlined" startIcon={<FileUploadIcon />}>Importar</Button>
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm(emptyForm); setError(""); setDialogOpen(true); }}>
-                        Agregar
-                    </Button>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Agregar</Button>
                 </Box>
             </Box>
 
             <TextField
                 placeholder="Buscar por nombre, apellido o CI..."
-                size="small"
-                fullWidth
-                value={search}
+                size="small" fullWidth value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 sx={{ mb: 2 }}
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
             />
 
-            {/* MOBILE: cards */}
             {isMobile ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                     {loading ? (
-                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                            <CircularProgress />
-                        </Box>
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>
                     ) : filtered.length === 0 ? (
                         <Typography color="text.secondary" textAlign="center" py={4}>Sin resultados</Typography>
                     ) : filtered.map((r) => (
@@ -136,23 +177,22 @@ export default function FuncionariosPage() {
                                 </Box>
                                 <Typography color="text.secondary" fontSize="0.85rem">CI: {r.CI}</Typography>
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
-                                    <Typography color="text.secondary" fontSize="0.8rem">Código: {r.Codigo}</Typography>
-                                    <Chip label={jormenLabel[r.JorMen] || r.JorMen} size="small" variant="outlined" />
+                                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                                        <Chip label={jormenLabel[r.JorMen] || r.JorMen} size="small" variant="outlined" />
+                                        {r.Industria ? <Chip label="Industria" size="small" color="info" /> : null}
+                                        {r.Ley14411Industria ? <Chip label="Ley 14411" size="small" color="secondary" /> : null}
+                                    </Box>
+                                    <IconButton size="small" onClick={() => openEdit(r)}><EditIcon fontSize="small" /></IconButton>
                                 </Box>
                             </CardContent>
                         </Card>
                     ))}
                 </Box>
             ) : (
-                /* DESKTOP: tabla */
                 <Box sx={{ backgroundColor: "#fff", borderRadius: 2, overflow: "hidden" }}>
                     <DataGrid
-                        rows={filtered}
-                        columns={columns}
-                        getRowId={(row) => row.Codigo}
-                        loading={loading}
-                        autoHeight
-                        pageSizeOptions={[10, 25, 50]}
+                        rows={filtered} columns={columns} getRowId={(row) => row.Codigo}
+                        loading={loading} autoHeight pageSizeOptions={[10, 25, 50]}
                         initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                         disableRowSelectionOnClick
                         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
@@ -165,12 +205,10 @@ export default function FuncionariosPage() {
                 </Box>
             )}
 
-            {/* Dialog agregar */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Agregar funcionario</DialogTitle>
+                <DialogTitle>{editing ? "Editar funcionario" : "Agregar funcionario"}</DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
-                        {error && <Typography color="error" fontSize="0.85rem">{error}</Typography>}
                         <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
                             <TextField label="Apellido *" fullWidth value={form.apellido1} onChange={(e) => setForm({ ...form, apellido1: e.target.value })} />
                             <TextField label="Segundo apellido" fullWidth value={form.apellido2} onChange={(e) => setForm({ ...form, apellido2: e.target.value })} />
@@ -187,13 +225,48 @@ export default function FuncionariosPage() {
                                 <MenuItem value="M">Mensual</MenuItem>
                             </Select>
                         </FormControl>
+                        {editing && (
+                            <FormControl fullWidth>
+                                <InputLabel>Estado</InputLabel>
+                                <Select value={form.estado} label="Estado" onChange={(e) => setForm({ ...form, estado: e.target.value })}>
+                                    <MenuItem value="A">Activo</MenuItem>
+                                    <MenuItem value="E">Egresado</MenuItem>
+                                    <MenuItem value="I">Inactivo</MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={form.industria}
+                                        onChange={(e) => setForm({ ...form, industria: e.target.checked })}
+                                        sx={{ color: "#E8630A", "&.Mui-checked": { color: "#E8630A" } }}
+                                    />
+                                }
+                                label="Industria"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={form.ley14411Industria}
+                                        onChange={(e) => setForm({ ...form, ley14411Industria: e.target.checked })}
+                                        sx={{ color: "#E8630A", "&.Mui-checked": { color: "#E8630A" } }}
+                                    />
+                                }
+                                label="Ley 14411 Industria"
+                            />
+                        </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                    <Button variant="contained" onClick={handleGuardar} disabled={saving}>
-                        {saving ? <CircularProgress size={20} /> : "Guardar"}
-                    </Button>
+                <DialogActions sx={{ px: 3, pb: 2, flexDirection: "column", alignItems: "stretch", gap: 1 }}>
+                    {error && <Alert severity="error" sx={{ mb: 1 }}>{error}</Alert>}
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                        <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                        <Button variant="contained" onClick={handleGuardar} disabled={saving}>
+                            {saving ? <CircularProgress size={20} /> : "Guardar"}
+                        </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
         </Box>
