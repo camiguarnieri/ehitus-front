@@ -6,6 +6,7 @@ import {
 import GridOnIcon from "@mui/icons-material/GridOn";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import { useNavigate } from "react-router-dom";
 import { getControlCarga } from "../../api/apiCalls";
 
 function getDatesInRange(fechaDesde, fechaHasta) {
@@ -19,11 +20,13 @@ function getDatesInRange(fechaDesde, fechaHasta) {
     return dates;
 }
 
+
 const diasCortos = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 export default function ControlCargaPage() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    const navigate = useNavigate();
 
     const hoy = new Date().toISOString().split("T")[0];
     const primerDiaMes = hoy.substring(0, 7) + "-01";
@@ -275,8 +278,11 @@ export default function ControlCargaPage() {
                                                             <CheckCircleIcon sx={{ color: "success.main", fontSize: 20 }} />
                                                         </Tooltip>
                                                     ) : (
-                                                        <Tooltip title="Sin carga">
-                                                            <CancelIcon sx={{ color: "error.light", fontSize: 20 }} />
+                                                        <Tooltip title="Ir a cargar">
+                                                            <CancelIcon
+                                                                sx={{ color: "error.light", fontSize: 20, cursor: "pointer", "&:hover": { color: "error.main" } }}
+                                                                onClick={() => navigate(`/carga-horaria?fecha=${fecha}`)}
+                                                            />
                                                         </Tooltip>
                                                     )}
                                                 </Box>

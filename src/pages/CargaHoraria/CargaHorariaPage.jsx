@@ -5,6 +5,7 @@ import {
     useMediaQuery, useTheme, Collapse, IconButton
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { useLocation } from "react-router-dom";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { getObras, getPlanillaHs, savePlanillaHs } from "../../api/apiCalls";
@@ -225,6 +226,7 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
 export default function CargaHorariaPage() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    const location = useLocation();
 
     const [fecha, setFecha] = useState(() => new Date().toISOString().split("T")[0]);
     const [obras, setObras] = useState([]);
@@ -238,6 +240,14 @@ export default function CargaHorariaPage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState("");
     const [cargado, setCargado] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const fechaParam = params.get("fecha");
+        if (fechaParam) {
+            setFecha(fechaParam);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         getObras()

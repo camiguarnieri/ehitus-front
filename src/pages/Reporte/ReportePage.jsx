@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { esES } from "@mui/x-data-grid/locales";
+import DownloadIcon from "@mui/icons-material/Download";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import { getObras, getFuncionarios, getReporte } from "../../api/apiCalls";
 
@@ -81,6 +82,40 @@ export default function ReportePage() {
         },
     ];
 
+    const handleExportarExcel = () => {
+        if (rows.length === 0) return;
+
+        const headers = ["Fecha", "Funcionario", "Obra", "Hs Normales", "Hs Extra", "Hs Nocturnas", "Hs Lluvia", "Hs Viaje", "Altura", "Donación", "Asamblea", "Paternidad", "Fallecimiento"];
+
+        const data = rows.map(r => [
+            r.Fecha,
+            r.NombreCompleto,
+            r.Obra?.trim(),
+            r.Hs,
+            r.HsExtra,
+            r.HsNoc,
+            r.HsLluvia,
+            r.HsViaje,
+            r.Altura,
+            r.Donacion,
+            r.Asamblea,
+            r.Paternidad,
+            r.Fallecimiento,
+        ]);
+
+        const csvContent = [headers, ...data]
+            .map(row => row.map(cell => `"${cell ?? 0}"`).join(","))
+            .join("\n");
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `reporte_ehitus_${mesDesde}_${mesHasta}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
@@ -155,6 +190,16 @@ export default function ReportePage() {
                 >
                     {loading ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Buscar"}
                 </Button>
+                {buscado && rows.length > 0 && (
+                    <Button
+                        variant="outlined"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleExportarExcel}
+                        sx={{ height: 40 }}
+                    >
+                        Exportar
+                    </Button>
+                )}
             </Box>
 
             {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
