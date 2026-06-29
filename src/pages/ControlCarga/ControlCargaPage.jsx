@@ -73,6 +73,68 @@ export default function ControlCargaPage() {
     const nombreFuncionario = (f) =>
         `${f.Apellido1 || ''} ${f.Apellido2 || ''}`.trim() + ', ' + `${f.Nombre1 || ''}`.trim();
 
+    const getSemanaDelMes = (numeroSemana) => {
+        const hoyDate = new Date();
+        const año = hoyDate.getFullYear();
+        const mes = hoyDate.getMonth();
+        const primerDia = new Date(año, mes, 1);
+        const lunes = new Date(año, mes, 1 + (numeroSemana - 1) * 7);
+        // Ajustar al lunes de esa semana
+        const diffLunes = lunes.getDay() === 0 ? -6 : 1 - lunes.getDay();
+        lunes.setDate(lunes.getDate() - diffLunes);
+        // Si el lunes cae antes del mes, usar el primer día del mes
+        const desde = lunes < primerDia ? primerDia : lunes;
+        // El hasta es el domingo siguiente o el último día del mes
+        const domingo = new Date(desde);
+        domingo.setDate(domingo.getDate() + 6);
+        const ultimoDia = new Date(año, mes + 1, 0);
+        const hasta = domingo > ultimoDia ? ultimoDia : domingo;
+        return {
+            desde: desde.toISOString().split("T")[0],
+            hasta: hasta.toISOString().split("T")[0],
+        };
+    };
+
+    const aplicarPeriodo = (desde, hasta) => {
+        setFechaDesde(desde);
+        setFechaHasta(hasta);
+        setData(null);
+    };
+
+    const hoyDate = new Date();
+    const mesActual = `${hoyDate.getFullYear()}-${String(hoyDate.getMonth() + 1).padStart(2, "0")}`;
+    const ultimoDiaMes = new Date(hoyDate.getFullYear(), hoyDate.getMonth() + 1, 0).getDate();
+
+    const periodos = [
+        {
+            label: "Esta semana",
+            onClick: () => {
+                const lunes = new Date(hoyDate);
+                const diff = lunes.getDay() === 0 ? -6 : 1 - lunes.getDay();
+                lunes.setDate(lunes.getDate() + diff);
+                const domingo = new Date(lunes);
+                domingo.setDate(domingo.getDate() + 6);
+                aplicarPeriodo(lunes.toISOString().split("T")[0], domingo.toISOString().split("T")[0]);
+            }
+        },
+        {
+            label: "Sem. pasada",
+            onClick: () => {
+                const lunes = new Date(hoyDate);
+                const diff = lunes.getDay() === 0 ? -6 : 1 - lunes.getDay();
+                lunes.setDate(lunes.getDate() + diff - 7);
+                const domingo = new Date(lunes);
+                domingo.setDate(domingo.getDate() + 6);
+                aplicarPeriodo(lunes.toISOString().split("T")[0], domingo.toISOString().split("T")[0]);
+            }
+        },
+        { label: "Sem. 1", onClick: () => { const s = getSemanaDelMes(1); aplicarPeriodo(s.desde, s.hasta); } },
+        { label: "Sem. 2", onClick: () => { const s = getSemanaDelMes(2); aplicarPeriodo(s.desde, s.hasta); } },
+        { label: "Sem. 3", onClick: () => { const s = getSemanaDelMes(3); aplicarPeriodo(s.desde, s.hasta); } },
+        { label: "Sem. 4", onClick: () => { const s = getSemanaDelMes(4); aplicarPeriodo(s.desde, s.hasta); } },
+        { label: "Este mes", onClick: () => aplicarPeriodo(`${mesActual}-01`, `${mesActual}-${ultimoDiaMes}`) },
+    ];
+
     return (
         <Box>
             {/* Header */}
@@ -89,6 +151,24 @@ export default function ControlCargaPage() {
             <Typography color="text.secondary" fontSize="0.85rem" sx={{ mb: 3, ml: "52px" }}>
                 Verificá qué días tiene horas cargadas cada funcionario.
             </Typography>
+            <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                {periodos.map((p) => (
+                    <Button
+                        key={p.label}
+                        size="small"
+                        variant="outlined"
+                        onClick={p.onClick}
+                        sx={{
+                            borderColor: "#E8630A",
+                            color: "#E8630A",
+                            fontSize: "0.78rem",
+                            "&:hover": { backgroundColor: "rgba(232,99,10,0.06)", borderColor: "#E8630A" }
+                        }}
+                    >
+                        {p.label}
+                    </Button>
+                ))}
+            </Box>
 
             {/* Filtros */}
             <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>

@@ -349,6 +349,33 @@ export default function CargaHorariaPage() {
         }
     };
 
+    const irA = (nuevaFecha) => {
+        setFecha(nuevaFecha);
+        setCargado(false);
+    };
+
+    const getLunes = (d) => {
+        const dia = new Date(d);
+        const diff = dia.getDay() === 0 ? -6 : 1 - dia.getDay();
+        dia.setDate(dia.getDate() + diff);
+        return dia.toISOString().split("T")[0];
+    };
+
+    const navButtons = [
+        {
+            label: "Hoy",
+            onClick: () => irA(new Date().toISOString().split("T")[0])
+        },
+        {
+            label: "Ayer",
+            onClick: () => {
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                irA(ayer.toISOString().split("T")[0]);
+            }
+        },
+    ];
+
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
@@ -364,6 +391,26 @@ export default function CargaHorariaPage() {
             <Typography color="text.secondary" fontSize="0.85rem" sx={{ mb: 5, ml: "52px" }}>
                 Seleccioná la fecha y la obra para cargar las horas del personal.
             </Typography>
+            <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                {navButtons.map((btn) => (
+                    <Button
+                        key={btn.label}
+                        size="small"
+                        variant="outlined"
+                        onClick={btn.onClick}
+                        sx={{
+                            borderColor: "#E8630A",
+                            color: "#E8630A",
+                            fontSize: "0.78rem",
+                            "&:hover": { backgroundColor: "rgba(232,99,10,0.06)", borderColor: "#E8630A" }
+                        }}
+                    >
+                        {btn.label}
+                    </Button>
+                ))}
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}></Box>
 
             <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
                 <TextField
