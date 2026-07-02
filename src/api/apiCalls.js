@@ -241,3 +241,13 @@ export const getCargaFuncionario = async (codigo, mes, quincena) => {
         throw error;
     }
 };
+
+export const getCategorias = async () => {
+    try {
+        const response = await ehitusApi.get("/categorias");
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo categorías:", error);
+        throw error;
+    }
+};

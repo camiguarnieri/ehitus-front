@@ -4,7 +4,7 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     FormControl, InputLabel, Select, MenuItem, CircularProgress,
     Card, CardContent, useMediaQuery, useTheme, IconButton, Tooltip,
-    FormControlLabel, Checkbox, Alert
+    Alert
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { esES } from "@mui/x-data-grid/locales";
@@ -12,7 +12,7 @@ import AddIcon from "@mui/icons-material/Add";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
-import { getTodosFuncionarios, createFuncionario, updateFuncionario } from "../../api/apiCalls";
+import { getFuncionarios, createFuncionario, updateFuncionario, getCategorias } from "../../api/apiCalls";
 
 const estadoLabel = { A: "Activo", E: "Egresado", I: "Inactivo" };
 const estadoColor = { A: "success", E: "warning", I: "error" };
@@ -20,7 +20,7 @@ const jormenLabel = { J: "Jornalero", M: "Mensual" };
 
 const emptyForm = {
     apellido1: "", apellido2: "", nombre1: "", nombre2: "",
-    ci: "", jorMen: "J", estado: "A", industria: false, ley14411Industria: false
+    ci: "", jorMen: "J", estado: "A", industria: false, ley14411Industria: false, codCat: ""
 };
 
 export default function FuncionariosPage() {
@@ -34,12 +34,14 @@ export default function FuncionariosPage() {
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [categorias, setCategorias] = useState([]);
 
     const cargar = async () => {
         setLoading(true);
         try {
-            const res = await getTodosFuncionarios();
-            setRows(res.data);
+            const [funcRes, catRes] = await Promise.all([getFuncionarios(), getCategorias()]);
+            setRows(funcRes.data || []);
+            setCategorias(catRes.data || []);
         } catch {
             setError("Error cargando funcionarios");
         } finally {
@@ -73,13 +75,13 @@ export default function FuncionariosPage() {
             estado: row.Estado || "A",
             industria: row.Industria === 1 || row.Industria === true,
             ley14411Industria: row.Ley14411Industria === 1 || row.Ley14411Industria === true,
+            codCat: row.CodCat || "",
         });
         setError("");
         setDialogOpen(true);
     };
 
     const handleGuardar = async () => {
-        console.log("handleGuardar llamado, form:", form);
         if (!form.apellido1 || !form.nombre1 || !form.ci) {
             setError("Apellido, nombre y CI son obligatorios");
             return;
@@ -117,12 +119,16 @@ export default function FuncionariosPage() {
             ),
         },
         {
-            field: "Industria", headerName: "Industria", width: 90,
-            renderCell: ({ value }) => value ? <Chip label="Sí" size="small" color="info" /> : ""
+            field: "Industria", headerName: "Sector", width: 150,
+            renderCell: ({ value }) => value
+                ? <Chip label="Incluido Ley 14411" size="small" color="success" />
+                : <Chip label="No incluido" size="small" variant="outlined" />
         },
         {
-            field: "Ley14411Industria", headerName: "Ley 14411", width: 100,
-            renderCell: ({ value }) => value ? <Chip label="Sí" size="small" color="secondary" /> : ""
+            field: "DescripcionCategoria", headerName: "Categoría", flex: 1, minWidth: 150,
+            renderCell: ({ value }) => value
+                ? <Typography fontSize="0.85rem">{value}</Typography>
+                : <Typography fontSize="0.85rem" color="text.disabled">Sin categoría</Typography>
         },
         {
             field: "Estado", headerName: "Estado", width: 100,
@@ -176,11 +182,17 @@ export default function FuncionariosPage() {
                                     <Chip label={estadoLabel[r.Estado] || r.Estado} size="small" color={estadoColor[r.Estado] || "default"} />
                                 </Box>
                                 <Typography color="text.secondary" fontSize="0.85rem">CI: {r.CI}</Typography>
+                                {r.DescripcionCategoria && (
+                                    <Typography color="text.secondary" fontSize="0.82rem">
+                                        {r.DescripcionCategoria}
+                                    </Typography>
+                                )}
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
                                     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
                                         <Chip label={jormenLabel[r.JorMen] || r.JorMen} size="small" variant="outlined" />
-                                        {r.Industria ? <Chip label="Industria" size="small" color="info" /> : null}
-                                        {r.Ley14411Industria ? <Chip label="Ley 14411" size="small" color="secondary" /> : null}
+                                        {r.Industria
+                                            ? <Chip label="Incluido Ley 14411" size="small" color="success" />
+                                            : <Chip label="No incluido" size="small" variant="outlined" />}
                                     </Box>
                                     <IconButton size="small" onClick={() => openEdit(r)}><EditIcon fontSize="small" /></IconButton>
                                 </Box>
@@ -235,28 +247,34 @@ export default function FuncionariosPage() {
                                 </Select>
                             </FormControl>
                         )}
-                        <Box sx={{ display: "flex", gap: 2 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={form.industria}
-                                        onChange={(e) => setForm({ ...form, industria: e.target.checked })}
-                                        sx={{ color: "#E8630A", "&.Mui-checked": { color: "#E8630A" } }}
-                                    />
-                                }
-                                label="Industria"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={form.ley14411Industria}
-                                        onChange={(e) => setForm({ ...form, ley14411Industria: e.target.checked })}
-                                        sx={{ color: "#E8630A", "&.Mui-checked": { color: "#E8630A" } }}
-                                    />
-                                }
-                                label="Ley 14411 Industria"
-                            />
-                        </Box>
+                        <FormControl fullWidth>
+                            <InputLabel>Sector</InputLabel>
+                            <Select
+                                value={form.ley14411Industria ? "incluido" : "no_incluido"}
+                                label="Sector"
+                                onChange={(e) => setForm({
+                                    ...form,
+                                    industria: e.target.value === "incluido",
+                                    ley14411Industria: e.target.value === "incluido"
+                                })}
+                            >
+                                <MenuItem value="incluido">Incluido Ley 14411</MenuItem>
+                                <MenuItem value="no_incluido">No incluido</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl fullWidth>
+                            <InputLabel>Categoría</InputLabel>
+                            <Select
+                                value={form.codCat}
+                                label="Categoría"
+                                onChange={(e) => setForm({ ...form, codCat: e.target.value })}
+                            >
+                                <MenuItem value="">Sin categoría</MenuItem>
+                                {categorias.map((c) => (
+                                    <MenuItem key={c.CodCat} value={c.CodCat}>{c.Descripcion}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2, flexDirection: "column", alignItems: "stretch", gap: 1 }}>

@@ -13,13 +13,16 @@ const diasSemana = ["domingo", "lunes", "martes", "miercoles", "jueves", "vierne
 const diasCortos = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 const tiposHs = [
+    { key: "hsNoc", label: "Hs. nocturna esporádica (30%)" },
+    { key: "hsExtNoctPerm", label: "Hs. nocturna permanente (50%)" },
     { key: "hsExtra", label: "Hs. extra" },
-    { key: "hsExtraEsp", label: "Hs. extra esp." },
-    { key: "hsNoc", label: "Hs. nocturnas" },
-    { key: "hsExNoc", label: "Hs. extra noc." },
-    { key: "hsExtNoctPerm", label: "Hs. extra noc. perm." },
+    { key: "hsExNoc", label: "Hs. extra nocturna" },
+    { key: "hsExtraEsp", label: "Hs. extra especial" },
+    { key: "altura", label: "Comp. altura" },
+];
+
+const tiposHsAdmin = [
     { key: "hsFeriados", label: "Hs. feriados" },
-    { key: "hsLluvia", label: "Hs. lluvia" },
     { key: "hsViaje", label: "Hs. viaje" },
 ];
 
@@ -62,9 +65,11 @@ function DiaCard({ fecha, numObra, data, onChange, parametro }) {
     const esFinDeSemana = d.getDay() === 0 || d.getDay() === 6;
     const hsNormales = getHsNormales(parametro, fecha);
     const hsValue = parseFloat(data.hs);
-    const showWarning = !isNaN(hsValue) && hsValue > 9;
+    const showWarning = !isNaN(hsValue) && hsValue !== "" && hsNormales !== "" && hsValue < parseFloat(hsNormales);
     const diaNombre = diasCortos[d.getDay()];
     const diaNum = d.getDate();
+    const rol = localStorage.getItem("rol");
+    const tiposMostrar = rol === "admin" ? [...tiposHs, ...tiposHsAdmin] : tiposHs;
 
     return (
         <Card variant="outlined" sx={{
@@ -87,10 +92,10 @@ function DiaCard({ fecha, numObra, data, onChange, parametro }) {
 
                     <Divider orientation="vertical" flexItem />
 
-                    {/* Horas normales */}
+                    {/* Horas trabajadas */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Typography fontSize="0.82rem" color="text.secondary" sx={{ minWidth: 90 }}>
-                            Horas normales
+                            Horas trabajadas
                         </Typography>
                         <HsField
                             value={data.hs}
@@ -106,10 +111,9 @@ function DiaCard({ fecha, numObra, data, onChange, parametro }) {
                         )}
                     </Box>
 
-                    {/* Altura */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Typography fontSize="0.82rem" color="text.secondary">Altura</Typography>
-                        <HsField value={data.altura} onChange={(e) => onChange("altura", e.target.value)} sx={{ width: 72 }} />
+                        <Typography fontSize="0.82rem" color="text.secondary">Hs. lluvia</Typography>
+                        <HsField value={data.hsLluvia} onChange={(e) => onChange("hsLluvia", e.target.value)} sx={{ width: 72 }} />
                     </Box>
 
                     <Box sx={{ flexGrow: 1 }} />
@@ -121,7 +125,7 @@ function DiaCard({ fecha, numObra, data, onChange, parametro }) {
 
                 {showWarning && (
                     <Alert severity="warning" sx={{ mt: 1, py: 0.25, fontSize: "0.78rem" }}>
-                        Más de 9 horas normales
+                        {`Este funcionario tiene ${hsNormales}hs asignadas para este día. Seleccioná una incidencia.`}
                     </Alert>
                 )}
 
@@ -131,7 +135,7 @@ function DiaCard({ fecha, numObra, data, onChange, parametro }) {
                         Tipos de horas
                     </Typography>
                     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 1.5 }}>
-                        {tiposHs.map((tipo) => (
+                        {tiposaMostrar.map((tipo) => (
                             <Box key={tipo.key}>
                                 <Typography fontSize="0.72rem" color="text.secondary" mb={0.5}>{tipo.label}</Typography>
                                 <HsField value={data[tipo.key]} onChange={(e) => onChange(tipo.key, e.target.value)} sx={{ width: "100%" }} />

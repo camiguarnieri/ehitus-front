@@ -13,14 +13,12 @@ import { getObras, getPlanillaHs, savePlanillaHs } from "../../api/apiCalls";
 const diasSemana = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
 
 const tiposHs = [
+    { key: "hsNoc", label: "Hs. nocturna esporádica (30%)" },
+    { key: "hsExtNoctPerm", label: "Hs. nocturna permanente (50%)" },
     { key: "hsExtra", label: "Hs. extra" },
-    { key: "hsExtraEsp", label: "Hs. extra esp." },
-    { key: "hsNoc", label: "Hs. nocturnas" },
-    { key: "hsExNoc", label: "Hs. extra noc." },
-    { key: "hsExtNoctPerm", label: "Hs. extra noc. perm." },
-    { key: "hsFeriados", label: "Hs. feriados" },
-    { key: "hsLluvia", label: "Hs. lluvia" },
-    { key: "hsViaje", label: "Hs. viaje" },
+    { key: "hsExNoc", label: "Hs. extra nocturna" },
+    { key: "hsExtraEsp", label: "Hs. extra especial" },
+    { key: "altura", label: "Comp. altura" },
 ];
 
 // donacion, paternidad, fallecimiento → checkbox; asamblea → input
@@ -74,7 +72,15 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
     const nombre = `${func.Apellido1} ${func.Apellido2} ${func.Nombre1} ${func.Nombre2}`.trim();
 
     const hsValue = parseFloat(data.hs);
-    const showHsWarning = !isNaN(hsValue) && hsValue > 9;
+    const rol = localStorage.getItem("rol");
+    const tiposHsAdmin = [
+        { key: "hsFeriados", label: "Hs. feriados" },
+        { key: "hsViaje", label: "Hs. viaje" },
+    ];
+    const tiposMostrar = rol === "admin"
+        ? [...tiposHs, ...tiposHsAdmin]
+        : tiposHs;
+    const showHsWarning = !isNaN(hsValue) && hsValue !== "" && hsNormales !== "" && hsValue < parseFloat(hsNormales);
 
     return (
         <Card
@@ -107,7 +113,7 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 2, flexWrap: "wrap" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                         <Typography fontSize="0.85rem" color="text.secondary" sx={{ minWidth: 110 }}>
-                            Horas normales
+                            Horas trabajadas
                         </Typography>
                         <HsField
                             value={data.hs}
@@ -127,12 +133,11 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                         )}
                     </Box>
 
-                    {/* Altura → ahora input numérico */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Typography fontSize="0.85rem" color="text.secondary">Altura</Typography>
+                        <Typography fontSize="0.85rem" color="text.secondary">Hs. lluvia</Typography>
                         <HsField
-                            value={data.altura}
-                            onChange={(e) => onChange("altura", e.target.value)}
+                            value={data.hsLluvia}
+                            onChange={(e) => onChange("hsLluvia", e.target.value)}
                             sx={{ width: 88 }}
                         />
                     </Box>
@@ -141,7 +146,7 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                 {/* Advertencia hs > 9 */}
                 {showHsWarning && (
                     <Alert severity="warning" sx={{ mt: 1.5, py: 0.5, fontSize: "0.8rem" }}>
-                        Se están cargando más de 9 horas normales para este funcionario.
+                        {`Este funcionario tiene ${hsNormales}hs asignadas para este día. Seleccioná una incidencia.`}
                     </Alert>
                 )}
 
@@ -157,10 +162,10 @@ function FuncionarioCard({ func, data, onChange, parametro, fecha }) {
                     </Typography>
                     <Box sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" },
+                        gridTemplateColumns: { xs: "1asi?fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" },
                         gap: 1.5,
                     }}>
-                        {tiposHs.map((tipo) => (
+                        {tiposMostrar.map((tipo) => (
                             <Box key={tipo.key}>
                                 <Typography fontSize="0.75rem" color="text.secondary" mb={0.5}>
                                     {tipo.label}
@@ -410,7 +415,6 @@ export default function CargaHorariaPage() {
                 ))}
             </Box>
 
-            <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}></Box>
 
             <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
                 <TextField
